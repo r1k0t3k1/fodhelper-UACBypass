@@ -1,5 +1,7 @@
 # fodhelper-UACBypass
 
+fodhelper.exe UAC Bypass with PowerShell.
+
 ## Usage
 ```powershell
 PS> . ./fodhelper-UACBypass.ps1
